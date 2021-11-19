@@ -1,6 +1,8 @@
 
-wd00 <- "/home/hal9000/ddPCR_comparison_MST_smpls_2021"
+#wd00 <- "/home/hal9000/ddPCR_comparison_MST_smpls_2021"
+wd00 <- "/home/hal9000/Documents/Documents/NIVA_Ansaettelse_2021/ddPCR_comparison_MST_smpls_2021"
 setwd(wd00)
+
 getwd()
 #grep for the '.csv' files in the directory, and place in a list
 lst_fcsv <- list.files(wd00)[grep("\\.csv",list.files(wd00))]
@@ -27,4 +29,4 @@ for (f in lst_fcsv)
 
 df_dd01 <- as.data.frame(do.call(rbind,lst_df1))
 
-head(df_dd01,3)
+head(df_dd01,4)
