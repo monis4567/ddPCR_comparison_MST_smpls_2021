@@ -73,6 +73,9 @@ df_dd01$spcAbr    <- filenmVl$X4
 df_dd01$pltNo     <- filenmVl$X5
 df_dd01$ddPCRmch  <- filenmVl$X6
 df_dd01$rundate   <- as.character(gsub("rundate","",filenmVl$X7))
+#the ddPCR QIAcuity mix comprised a total volume of 40 uL
+# I added 2 uL template
+df_dd01$Concentration_copies_uL <- df_dd01$Concentration_copies_uL*40/2
 #make a column numeric
 df_dd01$Concentration_copies_uL <-  as.numeric(df_dd01$Concentration_copies_uL)
 # take log10 to a column plus one
@@ -80,6 +83,10 @@ df_dd01$l10_conc_cp_uL_p1 <- log10(df_dd01$Concentration_copies_uL+1)
 
 CI_ccp <- df_dd01$Concentration_copies_uL*df_dd01$CI_95
 df_dd01$sd <- log10(CI_ccp+1)
+
+#exclude sample MST0147 as it was excluded in the ddPCR BioRad setup
+# and is better to exclude to be able to compare plots
+df_dd01 <- df_dd01[!df_dd01$Sample_NTC_Control=="MST0147",]
 #head(df_dd01,4)
 library(ggplot2)
 # see it in a plot
@@ -105,6 +112,39 @@ plt01 <- plt01 + labs(shape='species')
 plt01 <- plt01 + labs(title = "ddPCR w QIAcuity")#,
 # see the plot
 plt01
+
+
+library(ggplot2)
+# see it in a plot
+plt01 <- ggplot2::ggplot(data=df_dd01, 
+                         aes(y=Sample_NTC_Control,
+                             x=l10_conc_cp_uL_p1,
+                             group= spcAbr,
+                             color= spcAbr)) +
+  
+  geom_point() +
+  #scale_x_continuous(limits = c(0, 8)) + 
+  coord_cartesian(xlim = c(0, 8)) +
+  facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
+  # See this website for adding error bars:
+  #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
+  geom_errorbar(aes(xmin=l10_conc_cp_uL_p1-sd,
+                    xmax=l10_conc_cp_uL_p1+sd), width=0.2)#,
+
+#position=position_dodge(.9))
+#modify the axis labels
+plt01 <- plt01 + xlab("log10 to (conc in copies per uL plus 1)") + ylab("sample")
+
+# you will have to change the legend for all legends
+plt01 <- plt01 + labs(color='species')
+plt01 <- plt01 + labs(fill='species')
+plt01 <- plt01 + labs(shape='species')
+#change the title of the plot
+plt01 <- plt01 + labs(title = "ddPCR QIAcuity")#,
+# see the plot
+plt01
+
+
 #define path for file with MST collection data for NOVANA smpls from 2019-2020
 pth_MSTcol <- "/home/hal9000/Documents/Documents/NIVA_Ansaettelse_2020/NOVANA_proever_2018_2019/out03_match_csv_MST_w_extractions"
 #define path for file with qPCR data for NOVANA smpls from 2019-2020
@@ -153,6 +193,8 @@ df_qP01$smpltp.speciesabbr <- paste(df_qP01$smpltp,".",df_qP01$speciesabbr,sep="
 df_qP01$Quantitycopies[is.na(df_qP01$Quantitycopies)] <- 0
 #make numeric
 df_qP01$Quantitycopies <- as.numeric(df_qP01$Quantitycopies)
+# I used 3 uL template, this means the original sample contains 1/3
+df_qP01$Quantitycopies <- df_qP01$Quantitycopies*1/3
 
 df_qP01$Qcp_l10 <- log10(df_qP01$Quantitycopies+1)
 #deinfe columns to keep
@@ -182,6 +224,15 @@ df_dd01$l10_qPCRcopies_mean_p1 <- df_dd01$qPCRcopies_mean
 df_dd01$qP_sd <- log10(df_dd01$qPCRcopies_sd+1)
 df_dd01$qP_sd  <- df_dd01$qPCRcopies_sd
 
+df_dd01$qPCRcopies_mean[is.na(df_dd01$qPCRcopies_mean)] <- 0
+df_dd01$qPCRcopies_mean <- as.numeric(df_dd01$qPCRcopies_mean) 
+
+df_dd01$qPCRcopies_sd[is.na(df_dd01$qPCRcopies_sd)] <- 0
+df_dd01$qPCRcopies_sd <- as.numeric(df_dd01$qPCRcopies_sd) 
+
+df_dd01$l10_qPCRcopies_mean_p1 <- df_dd01$qPCRcopies_mean
+df_dd01$qP_sd <- df_dd01$qPCRcopies_sd
+
 library(ggplot2)
 # see it in a plot
 plt02 <- ggplot2::ggplot(data=df_dd01, 
@@ -190,6 +241,8 @@ plt02 <- ggplot2::ggplot(data=df_dd01,
                              group= spcAbr,
                              color= spcAbr)) +
   geom_point() +
+  #scale_x_continuous(limits = c(0, 8)) + 
+  coord_cartesian(xlim = c(0, 8)) +
   facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
   # See this website for adding error bars:
   #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
@@ -217,11 +270,11 @@ df_dd01$qP_sd  <- as.numeric(df_dd01$qP_sd)
 df_dd01$dd_sd <- df_dd01$sd
 df_dd01$l10_ddPCRcopies_mean_p1 <- df_dd01$l10_conc_cp_uL_p1
 
-c(df_dd01$l10_ddPCRcopies_mean_p1)
+#c(df_dd01$l10_ddPCRcopies_mean_p1)
 lddP <- length(df_dd01$l10_ddPCRcopies_mean_p1)
 let1 <- c("A","B")
-rbind(let1,df_dd01$l10_ddPCRcopies_mean_p1)
-
+#rbind(let1,df_dd01$l10_ddPCRcopies_mean_p1)
+#
 keeps <- c("Sample.spcAbr",
            #"qPCRcopies_mean",
            "l10_qPCRcopies_mean_p1",
@@ -231,9 +284,9 @@ keeps <- c("Sample.spcAbr",
 # see column names
 #colnames(df_dd01)
 # only keep columns defined above
-df_dd02 <- df_dd01[keeps]
+#df_dd02 <- df_dd01[keeps]
 
-dplyr::mutate(df_dd02)
+#dplyr::mutate(df_dd02)
 # see it in a plot
 plt03 <- ggplot2::ggplot(data=df_dd01, 
                          aes(y=Sample_NTC_Control,
@@ -241,6 +294,8 @@ plt03 <- ggplot2::ggplot(data=df_dd01,
                              group= spcAbr,
                              color= spcAbr)) +
   geom_point() +
+  #scale_x_continuous(limits = c(0, 8)) + 
+  coord_cartesian(xlim = c(0, 8)) +
   facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
   # See this website for adding error bars:
   #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
@@ -284,8 +339,163 @@ wellnmb <-stringr::str_pad(wellnmb, 2, pad = "0")
 df_wlnm$Wellpos <- paste(welllet,wellnmb, sep="")
 #add wellname to ddPCR df
 df_BR09$wllnm <- df_wlnm$wllnm[match(df_BR09$Well, df_wlnm$Wellpos)]
+#substitute to retain species abbreviation or MST sample no
+df_BR09$spcAbr <- gsub("^(.*)_(.*)$","\\1",df_BR09$wllnm)
+df_BR09$MSTsmpl <- gsub("^(.*)_(.*)$","\\2",df_BR09$wllnm)
+df_BR09$spcAbr <- gsub("_std","",df_BR09$spcAbr)
 # add column to a new column
 df_BR09$Conc_copies_uL <- df_BR09$'Conc(copies/µL)'
+# multiply w 3/2 because 2 uL extract was used instead
+# 3 uL as was used in the other setups
+#df_BR09$Conc_copies_uL <- df_BR09$Conc_copies_uL*(3/2)
+
+# the total volume of ddPCR mix was 25 uL
+# I used 2 uL of original template
+
+df_BR09$Conc_copies_uL <- df_BR09$Conc_copies_uL*25/2
+#df_BR09$Conc_copies_uL <- df_BR09$`Copies/20µLWell`
+#make numeric
+df_BR09$Conc_copies_uL <- as.numeric(df_BR09$Conc_copies_uL)
 
 
-head(df_BR09,6)
+#take log10 plus to all eDNA concenctrations
+df_BR09$l10_copies_mean_p1 <- log10(df_BR09$Conc_copies_uL +1)
+# if any are NAs then replace them with zeros
+df_BR09$l10_copies_mean_p1[is.na(df_BR09$l10_copies_mean_p1)] <- 0
+
+
+#make numeric
+df_BR09$PoissonConfMin <- as.numeric(df_BR09$PoissonConfMin)
+df_BR09$PoissonConfMax <- as.numeric(df_BR09$PoissonConfMax)
+# multiply w 3/2 because 2 uL extract was used instead
+# 3 uL as was used in the other setups
+# df_BR09$PoissonConfMax <- df_BR09$PoissonConfMax*(3/2)
+# df_BR09$PoissonConfMin <- df_BR09$PoissonConfMin*(3/2)
+
+df_BR09$PoissonConfMax <- df_BR09$PoissonConfMax*(25/2)
+df_BR09$PoissonConfMin <- df_BR09$PoissonConfMin*(25/2)
+# if any are NAs then replace them with zeros
+df_BR09$PoissonConfMin[is.na(df_BR09$PoissonConfMin)] <- 0
+df_BR09$PoissonConfMax[is.na(df_BR09$PoissonConfMax)] <- 0
+# take log10 plus 1 to sd
+df_BR09$ddPBR_sdmn_l10 <- log10(df_BR09$PoissonConfMin+1)
+df_BR09$ddPBR_sdmx_l10 <- log10(df_BR09$PoissonConfMax+1)
+
+df_BR09$MSTsmpl[grepl("E",df_BR09$MSTsmpl)] <- paste("std",df_BR09$MSTsmpl[grepl("E",df_BR09$MSTsmpl)],sep="")
+#head(df_BR09,6)
+
+#dplyr::mutate(df_dd02)
+# see it in a plot
+plt04 <- ggplot2::ggplot(data=df_BR09, 
+                         aes(y=MSTsmpl,
+                             x=l10_copies_mean_p1,
+                             group= spcAbr,
+                             color= spcAbr)) +
+  geom_point() +
+  #scale_x_continuous(limits = c(0, 8)) + 
+  coord_cartesian(xlim = c(0, 8)) +
+  facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
+  # See this website for adding error bars:
+  #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
+  geom_errorbar(aes(xmin=l10_copies_mean_p1-ddPBR_sdmn_l10,
+                    xmax=l10_copies_mean_p1+ddPBR_sdmx_l10), width=0.2)#,
+#position=position_dodge(.9))
+#modify the axis labels
+plt04 <- plt04 + xlab("log10 to (conc in copies per uL plus 1)") + ylab("sample")
+
+# you will have to change the legend for all legends
+plt04 <- plt04 + labs(color='species')
+plt04 <- plt04 + labs(fill='species')
+plt04 <- plt04 + labs(shape='species')
+#change the title of the plot
+plt04 <- plt04 + labs(title = "BioRad test ddPCR009")#,
+# see the plot
+plt04
+
+
+#_______________________________________________________________________________
+#_______________________________________________________________________________
+# Now combine all plots in to one diagram
+    plt001 <-  plt01 # ddPCR QIAcuity
+    plt002 <-  plt02 # qPCR BioRad
+    plt003 <-  plt04 # ddPCR BioRad
+# Add titles
+# see this example: https://www.datanovia.com/en/blog/ggplot-title-subtitle-and-caption/
+# p01t <- p01 + labs(title = "Amphibians detected by eDNA",
+#               subtitle = "approv controls and 1 or 2 pos repl")#,
+#caption = "Data source: ToothGrowth")
+p01t <- plt001 + labs(title = "A - ddPCR QIAcuity")#,
+# Add titles
+# p02t <- p02 + labs(title = "eDNA samples attempted",
+#                    subtitle = "at least approv controls and 1 or 2 pos repl")#,
+p02t <- plt002 + labs(title = "B - qPCR BioRad")#,
+# Add titles
+# p03t <- p03 + labs(title = "eDNA samples attempted",
+#                    subtitle = "both unapprov controls and approv contrl")#,
+p03t <- plt003 + labs(title = "C - ddPCR BioRad test009")#,
+
+#see the plot
+# p01t
+# p02t
+# p03t
+
+# ------------- plot Combined figure -------------
+library(patchwork)
+# set a variable to TRUE to determine whether to save figures
+bSaveFigures <- T
+#getwd()
+#define a filename to save to
+fnm03 <- "compare_ddPCR_w_qPCR_on_eDNA_samples_02"
+
+#see this website: https://www.rdocumentation.org/packages/patchwork/versions/1.0.0
+# on how to arrange plots in patchwork
+p <-  p01t +
+      p02t +
+      p03t +
+  
+  plot_layout(nrow=1,ncol=3,byrow=T) + #xlab(xlabel) +
+  plot_layout(guides = "collect") +
+  plot_annotation(caption=fnm03) #& theme(legend.position = "bottom")
+#p
+#make filename to save plot to
+figname02 <- paste0(fnm03,".png")
+
+
+if(bSaveFigures==T){
+  ggsave(p,file=figname02,
+         #width=210,height=297,
+         width=297,height=210,
+         units="mm",dpi=300)
+}
+
+#
+fnm04 <- "compare_ddPCR_w_qPCR_on_eDNA_samples_03"
+fnm05 <- "compare_ddPCR_w_qPCR_on_eDNA_samples_04"
+#see this website: https://www.rdocumentation.org/packages/patchwork/versions/1.0.0
+# on how to arrange plots in patchwork
+#p <-  p01b +
+p +
+    #
+  
+  plot_layout(nrow=1,ncol=3,byrow=T) + #xlab(xlabel) +
+  plot_layout(guides = "collect") +
+  plot_annotation(caption=fnm04) #& theme(legend.position = "bottom")
+#p
+#make filename to save plot to
+figname03 <- paste0(fnm04,".png")
+figname04 <- paste0(fnm05,".pdf")
+
+
+if(bSaveFigures==T){
+  ggsave(p,file=figname03,
+         #width=210,height=297,
+         width=297,height=210,
+         units="mm",dpi=300)
+}
+
+if(bSaveFigures==T){
+  ggsave(p,file=figname04,
+         #width=210,height=297,
+         width=297,height=210,
+         units="mm",dpi=300)
+}
