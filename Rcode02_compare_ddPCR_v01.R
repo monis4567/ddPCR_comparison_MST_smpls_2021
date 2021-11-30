@@ -322,9 +322,13 @@ plt03
 #_______________________________________________________________________________
 #Read in excel file with results from BioRad ddPCR
 BR_test09 <- "Test09 Carsten_20211118_133632_844.xlsx"
+BR_test10 <- "Test 10 start Carsten.xlsx"
 tbl_BR09 <- readxl::read_xlsx(BR_test09)
+tbl_BR10 <- readxl::read_xlsx(BR_test10)
 #make it a dataframe
 df_BR09 <- as.data.frame(tbl_BR09)
+df_BR10 <- as.data.frame(tbl_BR10)
+#head(df_BR09,5)
 #Read in well names for ddPCR plate
 tbl_wlnm <- readxl::read_xlsx("wellnames_test009_010_ddPCR_BioRad.xlsx")
 #make it a dataframe
@@ -339,12 +343,24 @@ wellnmb <-stringr::str_pad(wellnmb, 2, pad = "0")
 df_wlnm$Wellpos <- paste(welllet,wellnmb, sep="")
 #add wellname to ddPCR df
 df_BR09$wllnm <- df_wlnm$wllnm[match(df_BR09$Well, df_wlnm$Wellpos)]
+#
+df_BR10$wllnm <- df_wlnm$wllnm[match(df_BR10$Well, df_wlnm$Wellpos)]
 #substitute to retain species abbreviation or MST sample no
 df_BR09$spcAbr <- gsub("^(.*)_(.*)$","\\1",df_BR09$wllnm)
+#
+df_BR10$spcAbr <- gsub("^(.*)_(.*)$","\\1",df_BR10$wllnm)
+#
 df_BR09$MSTsmpl <- gsub("^(.*)_(.*)$","\\2",df_BR09$wllnm)
+#
+df_BR10$MSTsmpl <- gsub("^(.*)_(.*)$","\\2",df_BR10$wllnm)
+#
 df_BR09$spcAbr <- gsub("_std","",df_BR09$spcAbr)
+#
+df_BR10$spcAbr <- gsub("_std","",df_BR10$spcAbr)
 # add column to a new column
 df_BR09$Conc_copies_uL <- df_BR09$'Conc(copies/µL)'
+#
+df_BR10$Conc_copies_uL <- df_BR10$'Conc(copies/µL)'
 # multiply w 3/2 because 2 uL extract was used instead
 # 3 uL as was used in the other setups
 #df_BR09$Conc_copies_uL <- df_BR09$Conc_copies_uL*(3/2)
@@ -353,35 +369,91 @@ df_BR09$Conc_copies_uL <- df_BR09$'Conc(copies/µL)'
 # I used 2 uL of original template
 
 df_BR09$Conc_copies_uL <- df_BR09$Conc_copies_uL*25/2
+#
+df_BR10$Conc_copies_uL <- df_BR10$Conc_copies_uL*25/2
 #df_BR09$Conc_copies_uL <- df_BR09$`Copies/20µLWell`
 #make numeric
 df_BR09$Conc_copies_uL <- as.numeric(df_BR09$Conc_copies_uL)
-
+df_BR10$Conc_copies_uL <- as.numeric(df_BR10$Conc_copies_uL)
 
 #take log10 plus to all eDNA concenctrations
 df_BR09$l10_copies_mean_p1 <- log10(df_BR09$Conc_copies_uL +1)
+df_BR09$l10_copies_mean_p1 <- log10(df_BR09$Conc_copies_uL +1)
+#
+df_BR10$l10_copies_mean_p1 <- log10(df_BR10$Conc_copies_uL +1)
+df_BR10$l10_copies_mean_p1 <- log10(df_BR10$Conc_copies_uL +1)
 # if any are NAs then replace them with zeros
 df_BR09$l10_copies_mean_p1[is.na(df_BR09$l10_copies_mean_p1)] <- 0
+#
+df_BR10$l10_copies_mean_p1[is.na(df_BR10$l10_copies_mean_p1)] <- 0
 
 
 #make numeric
 df_BR09$PoissonConfMin <- as.numeric(df_BR09$PoissonConfMin)
 df_BR09$PoissonConfMax <- as.numeric(df_BR09$PoissonConfMax)
+#
+df_BR10$PoissonConfMin <- as.numeric(df_BR10$PoissonConfMin)
+df_BR10$PoissonConfMax <- as.numeric(df_BR10$PoissonConfMax)
+
+df_BR09$PoissonConfidenceMax68 <- as.numeric(df_BR09$PoissonConfidenceMax68)
+df_BR09$PoissonConfidenceMin68 <- as.numeric(df_BR09$PoissonConfidenceMin68)
+#
+df_BR10$PoissonConfidenceMax68 <- as.numeric(df_BR10$PoissonConfidenceMax68)
+df_BR10$PoissonConfidenceMin68 <- as.numeric(df_BR10$PoissonConfidenceMin68)
+
 # multiply w 3/2 because 2 uL extract was used instead
 # 3 uL as was used in the other setups
 # df_BR09$PoissonConfMax <- df_BR09$PoissonConfMax*(3/2)
 # df_BR09$PoissonConfMin <- df_BR09$PoissonConfMin*(3/2)
+#df_BR09$Conc_copies_uL[1:3]
+#df_BR09$PoissonConfidenceMax68[1:3]
 
 df_BR09$PoissonConfMax <- df_BR09$PoissonConfMax*(25/2)
 df_BR09$PoissonConfMin <- df_BR09$PoissonConfMin*(25/2)
+
+df_BR10$PoissonConfMax <- df_BR10$PoissonConfMax*(25/2)
+df_BR10$PoissonConfMin <- df_BR10$PoissonConfMin*(25/2)
+
+df_BR09$PoisConfMx68 <- df_BR09$PoissonConfidenceMax68*(25/2)
+df_BR09$PoisConfMi68 <- df_BR09$PoissonConfidenceMin68*(25/2)
+
+df_BR10$PoisConfMx68 <- df_BR10$PoissonConfidenceMax68*(25/2)
+df_BR10$PoisConfMi68 <- df_BR10$PoissonConfidenceMin68*(25/2)
 # if any are NAs then replace them with zeros
 df_BR09$PoissonConfMin[is.na(df_BR09$PoissonConfMin)] <- 0
 df_BR09$PoissonConfMax[is.na(df_BR09$PoissonConfMax)] <- 0
+
+df_BR10$PoissonConfMin[is.na(df_BR10$PoissonConfMin)] <- 0
+df_BR10$PoissonConfMax[is.na(df_BR10$PoissonConfMax)] <- 0
+
+df_BR09$PoisConfMx68[is.na(df_BR09$PoisConfMx68)] <- 0
+df_BR09$PoisConfMi68[is.na(df_BR09$PoisConfMi68)] <- 0
+
+df_BR10$PoisConfMx68[is.na(df_BR10$PoisConfMx68)] <- 0
+df_BR10$PoisConfMi68[is.na(df_BR10$PoisConfMi68)] <- 0
+
 # take log10 plus 1 to sd
 df_BR09$ddPBR_sdmn_l10 <- log10(df_BR09$PoissonConfMin+1)
 df_BR09$ddPBR_sdmx_l10 <- log10(df_BR09$PoissonConfMax+1)
 
+df_BR10$ddPBR_sdmn_l10 <- log10(df_BR10$PoissonConfMin+1)
+df_BR10$ddPBR_sdmx_l10 <- log10(df_BR10$PoissonConfMax+1)
+
+#df_BR09$PoisConfMx68
+df_BR09$ddPBR_sdmn_l10 <- log10(df_BR09$PoisConfMi68+1)
+df_BR09$ddPBR_sdmx_l10 <- log10(df_BR09$PoisConfMx68+1)
+
+df_BR10$ddPBR_sdmn_l10 <- log10(df_BR10$PoisConfMi68+1)
+df_BR10$ddPBR_sdmx_l10 <- log10(df_BR10$PoisConfMx68+1)
+
+
+# (df_BR09$l10_copies_mean_p1)[1:3]
+# (df_BR09$ddPBR_sdmn_l10)[1:3]
+# (df_BR09$ddPBR_sdmx_l10)[1:3]
+
+
 df_BR09$MSTsmpl[grepl("E",df_BR09$MSTsmpl)] <- paste("std",df_BR09$MSTsmpl[grepl("E",df_BR09$MSTsmpl)],sep="")
+df_BR10$MSTsmpl[grepl("E",df_BR10$MSTsmpl)] <- paste("std",df_BR10$MSTsmpl[grepl("E",df_BR10$MSTsmpl)],sep="")
 #head(df_BR09,6)
 
 #dplyr::mutate(df_dd02)
@@ -397,12 +469,13 @@ plt04 <- ggplot2::ggplot(data=df_BR09,
   facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
   # See this website for adding error bars:
   #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
-  geom_errorbar(aes(xmin=l10_copies_mean_p1-ddPBR_sdmn_l10,
-                    xmax=l10_copies_mean_p1+ddPBR_sdmx_l10), width=0.2)#,
+  geom_errorbar(aes(xmin=ddPBR_sdmn_l10, 
+                    xmax=ddPBR_sdmx_l10), width=.2,
+              position=position_dodge(.9))
 #position=position_dodge(.9))
 #modify the axis labels
 plt04 <- plt04 + xlab("log10 to (conc in copies per uL plus 1)") + ylab("sample")
-
+plt04
 # you will have to change the legend for all legends
 plt04 <- plt04 + labs(color='species')
 plt04 <- plt04 + labs(fill='species')
@@ -413,12 +486,44 @@ plt04 <- plt04 + labs(title = "BioRad test ddPCR009")#,
 plt04
 
 
+
+# see it in a plot
+plt05 <- ggplot2::ggplot(data=df_BR10, 
+                         aes(y=MSTsmpl,
+                             x=l10_copies_mean_p1,
+                             group= spcAbr,
+                             color= spcAbr)) +
+  geom_point() +
+  #scale_x_continuous(limits = c(0, 8)) + 
+  coord_cartesian(xlim = c(0, 8)) +
+  facet_wrap(~spcAbr, nrow = 2) + #'facet_wrap' subsets by column value in dataframe
+  # See this website for adding error bars:
+  #http://sthda.com/english/wiki/ggplot2-error-bars-quick-start-guide-r-software-and-data-visualization
+  geom_errorbar(aes(xmin=ddPBR_sdmn_l10, 
+                    xmax=ddPBR_sdmx_l10), width=.2,
+                position=position_dodge(.9))
+#position=position_dodge(.9))
+#modify the axis labels
+plt05 <- plt05 + xlab("log10 to (conc in copies per uL plus 1)") + ylab("sample")
+plt05
+# you will have to change the legend for all legends
+plt05 <- plt05 + labs(color='species')
+plt05 <- plt05 + labs(fill='species')
+plt05 <- plt05 + labs(shape='species')
+#change the title of the plot
+plt05 <- plt05 + labs(title = "BioRad test ddPCR010")#,
+# see the plot
+plt05
+
+
+
 #_______________________________________________________________________________
 #_______________________________________________________________________________
 # Now combine all plots in to one diagram
     plt001 <-  plt01 # ddPCR QIAcuity
     plt002 <-  plt02 # qPCR BioRad
     plt003 <-  plt04 # ddPCR BioRad
+    plt004 <-  plt05 # ddPCR BioRad
 # Add titles
 # see this example: https://www.datanovia.com/en/blog/ggplot-title-subtitle-and-caption/
 # p01t <- p01 + labs(title = "Amphibians detected by eDNA",
@@ -432,7 +537,9 @@ p02t <- plt002 + labs(title = "B - qPCR BioRad")#,
 # Add titles
 # p03t <- p03 + labs(title = "eDNA samples attempted",
 #                    subtitle = "both unapprov controls and approv contrl")#,
-p03t <- plt003 + labs(title = "C - ddPCR BioRad test009")#,
+p03t <- plt003 + labs(title = "C - ddPCR_009 BioRad")#,
+
+p04t <- plt004 + labs(title = "D - ddPCR_010 BioRad")#,to H10 and A11 to H11 and A12 to H12.
 
 #see the plot
 # p01t
@@ -452,8 +559,9 @@ fnm03 <- "compare_ddPCR_w_qPCR_on_eDNA_samples_02"
 p <-  p01t +
       p02t +
       p03t +
+      p04t +
   
-  plot_layout(nrow=1,ncol=3,byrow=T) + #xlab(xlabel) +
+  plot_layout(nrow=1,ncol=4,byrow=T) + #xlab(xlabel) +
   plot_layout(guides = "collect") +
   plot_annotation(caption=fnm03) #& theme(legend.position = "bottom")
 #p
@@ -477,7 +585,7 @@ fnm05 <- "compare_ddPCR_w_qPCR_on_eDNA_samples_04"
 p +
     #
   
-  plot_layout(nrow=1,ncol=3,byrow=T) + #xlab(xlabel) +
+  plot_layout(nrow=1,ncol=4,byrow=T) + #xlab(xlabel) +
   plot_layout(guides = "collect") +
   plot_annotation(caption=fnm04) #& theme(legend.position = "bottom")
 #p
@@ -499,3 +607,39 @@ if(bSaveFigures==T){
          width=297,height=210,
          units="mm",dpi=300)
 }
+
+
+#make minor extraction from grand ddPCR file
+c <- df_BR09$Conc_copies_uL[1:3]
+w <- df_BR09$Well[1:3]
+
+pmx<- df_BR09$PoissonConfidenceMax68[1:3]
+pmi <- df_BR09$PoissonConfidenceMin68[1:3]
+
+df_A1toA3 <- as.data.frame(cbind(w,c,pmx,pmi))
+colnames(df_A1toA3) <- c("WellName",
+                         "conc copies/uL",
+                         "PoissonConfidenceMax68",
+                         "PoissonConfidenceMin68")
+
+pth_fl02 <-  paste(wd00,"/","Table01_with_well_A1_to_A3_from_ddPCR_BioRad_test009_2021nov17.html",sep="")
+# get package
+if(!require("kableExtra")){
+  # see https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html#Table_Styles
+  #For dev version
+  install.packages("devtools")
+  devtools::install_github("haozhu233/kableExtra")
+  
+  library("kableExtra")
+}
+Tbltxt01 <- "Table 1. Extract from excel file for ddPCR BioRad test 009"
+df_A1toA3_v2 <- df_A1toA3 %>%
+  kableExtra::kbl(caption = Tbltxt01) %>%
+  kableExtra::kable_classic(full_width = F,html_font = "Cambria") %>%
+  kableExtra::kable_styling(latex_options = c("striped")) # %>%
+#column_spec(1, italic = T) 
+#and to export in a file a html file
+kableExtra::save_kable(df_A1toA3_v2,file=pth_fl02)
+
+
+#
